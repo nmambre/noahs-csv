@@ -88,3 +88,41 @@ customer_ids_rug_cleaner
 # get customers from df_customers where df_customers$customerid is in customer_ids_rug and df_customers$birthdate is in final_range$birthdate
 customers_rc__with_rug_cleaner <- df_customers[df_customers$customerid %in% customer_ids_rug_cleaner & df_customers$birthdate %in% final_range$birthdate, ]
 customers_rc__with_rug_cleaner
+
+# DAY 4: The Early Bird
+# split df_orders$ordered into df_orders$ordered_date and df_orders$ordered_time
+df_orders <- df_orders %>% separate(ordered, c("ordered_date", "ordered_time"), " ")
+
+# split df_orders$shipped into df_orders$shipped_date and df_orders$shipped_time
+df_orders <- df_orders %>% separate(shipped, c("shipped_date", "shipped_time"), " ")
+
+# get df_orders$orderid where both ordered_time and shipped_time  before 5 AM
+#df_orders_45 <- df_orders[df_orders$ordered_time <= "05:00:00" & df_orders$shipped_time <= "05:00:00", ]
+# get df_orders$orderid where both ordered_time and shipped_time  are between 4 AM and 5 AM
+df_orders_45 <- df_orders[df_orders$ordered_time >= "04:00:00" & df_orders$ordered_time <= "05:00:00" & df_orders$shipped_time >= "04:00:00" & df_orders$shipped_time <= "05:00:00", ]
+#df_orders_45
+
+# create df_sku_45 and get all rows where df_orders_items$orderid is in df_orders_45$orderid
+#df_sku_45 <- df_orders_items[df_orders_items$orderid %in% df_orders_45$orderid, ]
+# create df_sku_45 and get all rows where df_orders_items$orderid is in df_orders_45$orderid and sku starts with "DLI"
+# df_sku_45 <- df_orders_items[df_orders_items$orderid %in% df_orders_45$orderid & substr(df_orders_items$sku, 1, 3) == "DLI", ]
+# create df_sku_45 and get all rows where df_orders_items$orderid is in df_orders_45$orderid and sku starts with "BKY"
+df_sku_45 <- df_orders_items[df_orders_items$orderid %in% df_orders_45$orderid & substr(df_orders_items$sku, 1, 3) == "BKY", ]
+df_sku_45
+
+df_products <- read.csv("5784/noahs-products.csv")
+# get df_products$description from where df_products$sku is in df_sku_45
+df_products_45 <- df_products[df_products$sku %in% df_sku_45$sku, ]
+df_products_45
+
+
+# get customerid from df_orders_45 where df_orders_45$orderid is in df_orders_45_sku$orderid
+df_orders_45_customerid <- df_orders_45[df_orders_45$orderid %in% df_sku_45$orderid, ]
+df_orders_45_customerid
+
+
+
+# get rows of df_customers where df_customers$customerid is in df_orders_45_sku$customerid
+df_customers_45 <- df_customers[df_customers$customerid %in% df_orders_45_customerid$customerid, ]
+df_customers_45
+
