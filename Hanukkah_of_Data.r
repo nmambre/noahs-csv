@@ -52,7 +52,7 @@ customer_ids
 customers_with_initials_JP <- df_customers[df_customers$customerid %in% customer_ids & df_customers$initials == "JP", ]
 customers_with_initials_JP
 
-# Day 3: The Neighbor
+# DAY 3: The Neighbor
 # Create a vector of Rabbit years
 rabbit_years <- c(1927, 1939, 1951, 1963, 1975, 1987, 1999, 2011, 2023)
 
@@ -99,7 +99,8 @@ df_orders <- df_orders %>% separate(shipped, c("shipped_date", "shipped_time"), 
 # get df_orders$orderid where both ordered_time and shipped_time  before 5 AM
 #df_orders_45 <- df_orders[df_orders$ordered_time <= "05:00:00" & df_orders$shipped_time <= "05:00:00", ]
 # get df_orders$orderid where both ordered_time and shipped_time  are between 4 AM and 5 AM
-df_orders_45 <- df_orders[df_orders$ordered_time >= "04:00:00" & df_orders$ordered_time <= "05:00:00" & df_orders$shipped_time >= "04:00:00" & df_orders$shipped_time <= "05:00:00", ]
+df_orders_45 <-
+  df_orders[df_orders$ordered_time >= "04:00:00" & df_orders$ordered_time <= "05:00:00" & df_orders$shipped_time >= "04:00:00" & df_orders$shipped_time <= "05:00:00", ]
 #df_orders_45
 
 # create df_sku_45 and get all rows where df_orders_items$orderid is in df_orders_45$orderid
@@ -115,14 +116,49 @@ df_products <- read.csv("5784/noahs-products.csv")
 df_products_45 <- df_products[df_products$sku %in% df_sku_45$sku, ]
 df_products_45
 
-
 # get customerid from df_orders_45 where df_orders_45$orderid is in df_orders_45_sku$orderid
 df_orders_45_customerid <- df_orders_45[df_orders_45$orderid %in% df_sku_45$orderid, ]
 df_orders_45_customerid
-
-
 
 # get rows of df_customers where df_customers$customerid is in df_orders_45_sku$customerid
 df_customers_45 <- df_customers[df_customers$customerid %in% df_orders_45_customerid$customerid, ]
 df_customers_45
 
+# Day 5: The Cat Lady
+#sku_cat <- "PET0272"
+
+# get order id from sku
+#order_ids_cat <- df_orders_items[df_orders_items$sku == sku_cat, "orderid"]
+#order_ids_cat
+
+# get all skus from df_products that in the (lowercase) description has the word "cat" and either "adult" or "senior"
+#df_products_cat <- df_products[grepl("cat", tolower(df_products$desc)) & (grepl("adult", tolower(df_products$desc)) | grepl("senior", tolower(df_products$desc))), ]
+# get all skus from df_products that in the (lowercase) description has the word "cat" "senior"
+df_products_cat <- df_products[grepl("cat", tolower(df_products$desc)) &  grepl("senior", tolower(df_products$desc)), ]
+#df_products_cat$desc
+
+# get all the order ids from df_orders_items where df_orders_items$sku is in df_products_cat$sku or df_products_cat$sku is sku_cat
+order_ids_cat <- df_orders_items[df_orders_items$sku %in% df_products_cat$sku , "orderid"]
+#order_ids_cat <- df_orders_items[df_orders_items$sku %in% df_products_cat$sku | df_orders_items$sku == sku_cat, "orderid"]
+
+#order_ids_cat
+
+# get unique customer ids from order id
+customer_ids_cat <- df_orders[df_orders$orderid %in% order_ids_cat, ]
+#customer_ids_cat
+
+# get a df with the count of orders per customer
+customer_ids_cat_count <- customer_ids_cat %>% count(customerid, sort = TRUE)
+
+# get customers from df_customers where df_customers$customerid is in customer_ids_cat and df_customers$citystatezip starts with "Staten Island"
+customers_cat <- df_customers[df_customers$customerid %in% customer_ids_cat_count$customerid &   substr(df_customers$citystatezip, 1, 13) == "Staten Island", ]
+#customers_cat
+
+# add customer_ids_cat_count to customers_cat
+customers_cat <- merge(customers_cat, customer_ids_cat_count, by = "customerid")
+#customers_cat
+
+# order customers_cat by n (descending)
+customers_cat <- customers_cat[order(customers_cat$n, decreasing = TRUE), ]
+# print first row of customers_cat
+customers_cat[1, ]
