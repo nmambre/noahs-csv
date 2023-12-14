@@ -7,7 +7,7 @@ library(chron)
 
 # DAY 1: The Investigator
 # Read the CSV file
-df_customers <- read.csv("5784/noahs-customers.csv")
+df_customers <- read.csv("data/5784/noahs-customers.csv")
 
 # create first_name column
 df_customers$first_name <- sapply(strsplit(df_customers$name, " "), "[", 1)
@@ -36,7 +36,7 @@ matched_rows
 # Create initials column
 df_customers <- df_customers %>% mutate(initials = paste0(substr(first_name, 1, 1), substr(last_name, 1, 1)))
 
-df_orders_items <- read.csv("5784/noahs-orders_items.csv")
+df_orders_items <- read.csv("data/5784/noahs-orders_items.csv")
 
 # SKU for rug cleaner, quick search throught products.csv
 sku <- "HOM2761"
@@ -44,7 +44,7 @@ sku <- "HOM2761"
 order_ids <- df_orders_items[df_orders_items$sku == sku, "orderid"]
 #order_ids
 
-df_orders <- read.csv("5784/noahs-orders.csv")
+df_orders <- read.csv("data/5784/noahs-orders.csv")
 # get customer id from order id and ordered starts with 2017
 customer_ids <- df_orders[df_orders$orderid %in% order_ids & substr(df_orders$ordered, 1, 4) == "2017", "customerid"]
 #customer_ids
@@ -112,7 +112,7 @@ df_orders_45 <-
 df_sku_45 <- df_orders_items[df_orders_items$orderid %in% df_orders_45$orderid & substr(df_orders_items$sku, 1, 3) == "BKY", ]
 df_sku_45
 
-df_products <- read.csv("5784/noahs-products.csv")
+df_products <- read.csv("data/5784/noahs-products.csv")
 # get df_products$description from where df_products$sku is in df_sku_45
 df_products_45 <- df_products[df_products$sku %in% df_sku_45$sku, ]
 df_products_45
@@ -313,3 +313,27 @@ for (i in 1:nrow(same_shipped_orders)) {
 
 ex_customerid <- 5783
 df_customers[df_customers$customerid == ex_customerid, ]
+
+# DAY 8: The Collector
+# get all rows from df_products where df_products$sku starts with "COL"
+df_products_col <- df_products[substr(df_products$sku, 1, 3) == "COL", ]
+nrow(df_products_col)
+
+# get all rows from df_orders_items where df_orders_items$sku starts with "COL"
+df_orders_items_col <- df_orders_items[substr(df_orders_items$sku, 1, 3) == "COL", ]
+nrow(df_orders_items_col)
+
+# get all rows from df_orders where df_orders$orderid is in df_orders_items_col$orderid
+df_collectors <- merge(df_orders_items_col, df_orders, by = "orderid")
+
+glimpse(df_collectors)
+
+# Group by customerid and count the number of unique skus for each customer
+customer_sku_counts <- df_collectors %>%
+  group_by(customerid) %>%
+  summarize(unique_sku_count = n_distinct(sku)) %>%
+  arrange(desc(unique_sku_count))
+
+#View(customer_sku_counts)
+collector_customerid <- as.integer(customer_sku_counts[1, 1])
+df_customers[df_customers$customerid == collector_customerid, ]

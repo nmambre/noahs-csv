@@ -14,4 +14,5 @@
 |5 	|69 minutes | 1|
 |6 	|108 minutes| 1|
 |7 	|2 hours 	| 1|
+|8 	|31 minutes | 1|
 
