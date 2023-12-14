@@ -3,6 +3,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(lubridate)
+library(chron)
 
 # DAY 1: The Investigator
 # Read the CSV file
@@ -41,12 +42,12 @@ df_orders_items <- read.csv("5784/noahs-orders_items.csv")
 sku <- "HOM2761"
 # get order id from sku
 order_ids <- df_orders_items[df_orders_items$sku == sku, "orderid"]
-order_ids
+#order_ids
 
 df_orders <- read.csv("5784/noahs-orders.csv")
 # get customer id from order id and ordered starts with 2017
 customer_ids <- df_orders[df_orders$orderid %in% order_ids & substr(df_orders$ordered, 1, 4) == "2017", "customerid"]
-customer_ids
+#customer_ids
 
 # get customers from df_customers where df_customers$customerid is in customer_ids and df_customers$initials is "JP"
 customers_with_initials_JP <- df_customers[df_customers$customerid %in% customer_ids & df_customers$initials == "JP", ]
@@ -79,11 +80,11 @@ for (year_rabbit in rabbit_years) {
 }
 
 # View the resulting data frame
-print(final_range$birthdate)
+#print(final_range$birthdate)
 
 # get customerid that is in df_orders
 customer_ids_rug_cleaner <- df_orders[df_orders$orderid %in% order_ids, "customerid"]
-customer_ids_rug_cleaner
+#customer_ids_rug_cleaner
 
 # get customers from df_customers where df_customers$customerid is in customer_ids_rug and df_customers$birthdate is in final_range$birthdate
 customers_rc__with_rug_cleaner <- df_customers[df_customers$customerid %in% customer_ids_rug_cleaner & df_customers$birthdate %in% final_range$birthdate, ]
@@ -162,3 +163,153 @@ customers_cat <- merge(customers_cat, customer_ids_cat_count, by = "customerid")
 customers_cat <- customers_cat[order(customers_cat$n, decreasing = TRUE), ]
 # print first row of customers_cat
 customers_cat[1, ]
+
+# DAY 6: The Bargain Hunter
+# nrow(df_customers)
+
+# # get number of unique names
+# length(unique(df_customers$name))
+
+# df_customers <- df_customers[order(df_customers$birthdate), ]
+
+# # list names that are not unique
+# df_duplicated_names <- df_customers[duplicated(df_customers$name),]
+# df_duplicated_names <- df_duplicated_names[order(df_duplicated_names$name),]
+
+
+# # Find rows with the same name
+# duplicate_names <- df_customers[duplicated(df_customers$name) | duplicated(df_customers$name, fromLast = TRUE), ]
+# # Order the resulting data frame by name
+# sorted_duplicate_names <- duplicate_names[order(duplicate_names$name), ]
+
+# # Find rows with the same birthday
+# duplicate_birthday <- df_customers[duplicated(df_customers$birthday) | duplicated(df_customers$birthday, fromLast = TRUE), ]
+# # Order the resulting data frame by birthday
+# sorted_duplicate_birthday <- duplicate_birthday[order(duplicate_birthday$birthday), ]
+
+
+# # get rows that are df_customers$last_name is Wilson
+# df_wilsons <- df_customers[df_customers$last_name == "Wilson", ]
+
+
+# # get rows that are not unique and df_customers$last_name is Wilson
+# #df_wilsons <- df_customers[!duplicated(df_customers$name) & df_customers$last_name == "Wilson", ]
+
+# # order df_wilsons by name
+# df_wilsons <- df_wilsons[order(df_wilsons$name), ]
+
+# Merge df_orders_items and df_products on the 'sku' column
+df_price_compare <- merge(df_orders_items, df_products, by = 'sku', all.x = TRUE)
+
+# Filter rows where unit_price is lower than wholesale_cost
+df_sold_at_loss <- df_price_compare[df_price_compare$unit_price < df_price_compare$wholesale_cost, ]
+head(df_sold_at_loss)
+
+# Extract unique orderids from df_sold_at_loss
+unique_orderids <- unique(df_sold_at_loss$orderid)
+
+# Filter df_orders based on the unique orderids
+df_bargain_hunters <- df_orders[df_orders$orderid %in% unique_orderids, ]
+head(df_bargain_hunters)
+
+
+# Group by customerid and count the number of orderid for each customer
+customer_order_counts <- df_bargain_hunters %>%
+  group_by(customerid) %>%
+  summarize(order_count = n()) %>%
+  arrange(desc(order_count))
+
+# View the resulting data frame
+head(customer_order_counts)
+
+bargain_hunter_customerid <- as.integer(customer_order_counts[1, 1])
+
+df_customers[df_customers$customerid == bargain_hunter_customerid, ]
+
+# DAY 7: The Meet Cute
+#get all rows of df_orders where df_orders$customerid is bargain_hunter_customerid
+bargain_hunter_orders <- df_orders[df_orders$customerid == bargain_hunter_customerid, ]
+
+# get all rows of df_orders_items where df_orders_items$orderid is in bargain_hunter_orders$orderid
+bargain_hunter_order_items <- df_orders_items[df_orders_items$orderid %in% bargain_hunter_orders$orderid, ]
+
+# get all rows of df_products where df_products$sku is in bargain_hunter_order_items$sku
+bargain_hunter_products <- df_products[df_products$sku %in% bargain_hunter_order_items$sku, ]
+
+# get all rows of bargain_hunter_products where sku starts with "COL"
+bargain_hunter_products_col <- bargain_hunter_products[substr(bargain_hunter_products$sku, 1, 3) == "COL", ]
+bargain_hunter_products_col
+
+# get all rows of bargain_hunter_order_items where sku starts with "COL"
+bargain_hunter_order_items_col <- bargain_hunter_order_items[substr(bargain_hunter_order_items$sku, 1, 3) == "COL", ]
+bargain_hunter_order_items_col
+
+# get al rows of bargain_hunter_orders where orderid is in bargain_hunter_order_items_col$orderid
+bargain_hunter_orders_col <- bargain_hunter_orders[bargain_hunter_orders$orderid %in% bargain_hunter_order_items_col$orderid, ]
+bargain_hunter_orders_col
+
+# get all rows of df_orders where shipped_date is in bargain_hunter_orders_col$shipped_date
+same_shipped <- df_orders[df_orders$shipped_date %in% bargain_hunter_orders_col$shipped_date, ]
+head(same_shipped)
+
+same_shipped_order_items <- df_orders_items[df_orders_items$orderid %in% same_shipped$orderid, ]
+head(same_shipped_order_items)
+
+same_shipped_order_items_col <- same_shipped_order_items[substr(same_shipped_order_items$sku, 1, 3) == "COL", ]
+head(same_shipped_order_items_col)
+
+same_shipped_orders <- same_shipped[same_shipped$orderid %in% same_shipped_order_items_col$orderid, ]
+#head(same_shipped_orders$shipped_time)
+
+# # Convert shipped_time to chron format
+# same_shipped_orders$shipped_time <- chron(times = same_shipped_orders$shipped_time)
+
+
+# # Filter rows for the bargain hunter customer
+# bargain_hunter_data <- same_shipped_orders %>%
+#   filter(customerid == bargain_hunter_customerid)
+
+# # Calculate time differences for each shipped_date
+# time_diff_data <- same_shipped_orders %>%
+#   group_by(shipped_date) %>%
+#   summarize(time_diff = abs(as.numeric(diff(chron(times = c(bargain_hunter_data$shipped_time, shipped_time))))))
+
+# # Merge time_diff_data back into same_shipped_orders
+# same_shipped_orders <- merge(same_shipped_orders, time_diff_data, by = 'shipped_date', all.x = TRUE)
+
+# # sort by time_diff
+# same_shipped_orders <- same_shipped_orders[order(same_shipped_orders$time_diff), ]
+
+# # View the resulting data frame
+# head(same_shipped_orders)
+
+# Order same_shipped_orders by shipped_date and shipped_time
+same_shipped_orders <- same_shipped_orders %>%
+  arrange(shipped_date, shipped_time)
+
+# Initialize an empty data frame to store the result
+result_df <- data.frame()
+
+# Iterate through rows to find rows for the bargain hunter customer
+for (i in 1:nrow(same_shipped_orders)) {
+  if (same_shipped_orders$customerid[i] == bargain_hunter_customerid) {
+    # Get the row before
+    row_before <- same_shipped_orders[i - 1, , drop = FALSE]
+    
+    # Get the current row
+    current_row <- same_shipped_orders[i, , drop = FALSE]
+    
+    # Get the row after
+    row_after <- same_shipped_orders[i + 1, , drop = FALSE]
+    
+    # Combine the rows and bind to the result_df
+    combined_rows <- bind_rows(row_before, current_row, row_after)
+    result_df <- bind_rows(result_df, combined_rows)
+  }
+}
+
+# View the resulting data frame
+#print(result_df)
+
+ex_customerid <- 5783
+df_customers[df_customers$customerid == ex_customerid, ]
